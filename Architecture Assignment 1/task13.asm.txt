@@ -1,0 +1,23 @@
+global _main 
+extern _printf 
+section .data 
+equal Message db "Thenumbers areequal.",10,0 
+notEqualMessagedb"Thenumbersarenotequal.",10,0 
+section .text 
+_main: 
+mov al,10 
+mov bl,10 
+cmp al, bl 
+je numbers_are_equal 
+numbers_are_not_equal: 
+push notEqualMessage 
+call _printf 
+add esp,4 
+jmp finished 
+numbers_are_equal: 
+push equalMessage 
+call _printf 
+add esp, 4 
+finished: 
+xor eax, eax 
+ret

@@ -1,0 +1,21 @@
+global _main 
+extern _printf 
+section .data 
+zeroMessagedb"Nocommon1bitswerefound.",10,0 commonMessagedb"Common1bitswerefound.",10,0 
+section .text 
+_main: 
+mov bl,0x0F  
+test al,bl  
+jz no_common_bits 
+common_bits: 
+push commonMessage 
+call _printf 
+add esp,4 
+jmp finished 
+no_common_bits: 
+push zeroMessage 
+call _printf 
+add esp, 4 
+finished: 
+xor eax, eax 
+ret

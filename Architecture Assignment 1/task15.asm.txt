@@ -1,0 +1,27 @@
+
+global main
+extern printf
+
+section .data
+    format db "AL=%d, BL=%d", 10, 0
+
+section .text
+main:
+    mov al, 10
+    mov bl, 20
+
+    xchg al, bl
+
+    movzx ecx, bl
+    movzx eax, al
+
+    push ecx
+    push eax
+    push format
+    call printf
+
+    add esp, 12
+
+    xor eax, eax
+    ret
+```

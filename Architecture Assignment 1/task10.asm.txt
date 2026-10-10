@@ -1,0 +1,14 @@
+global _main 
+extern _printf 
+section .data 
+format db "AfterDEC, EBX=%d",10,0 
+section .text
+ _main:  
+movebx,10 
+dec ebx  
+push ebx 
+push format 
+call _printf 
+add esp,8 
+xor eax,eax 
+ret
