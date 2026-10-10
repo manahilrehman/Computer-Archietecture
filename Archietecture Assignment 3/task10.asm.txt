@@ -1,0 +1,18 @@
+section .data
+src dd 1234
+dst dd 0
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, src
+    mov ecx, dst
+
+    mov eax, [ebx + 0]  ; LW R1, 0(R2)
+    mov [ecx + 0], eax  ; SW R1, 0(R3)
+
+    popad
+    xor eax, eax
+    ret

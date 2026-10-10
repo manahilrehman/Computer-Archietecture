@@ -1,0 +1,23 @@
+section .data
+xs dd 2, 3
+ys dd 4, 5
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, xs
+    mov ecx, ys
+    mov ebp, 0          ; R10 = running sum
+
+    mov eax, [ebx + 0]  ; LW R3, 0(R1)   X0
+    mov edx, [ecx + 0]  ; LW R4, 0(R2)   Y0
+    mov esi, [ebx + 4]  ; LW R5, 4(R1)   X1 (pre-fetch)
+    mov edi, eax        ; MUL R6, R3, R4
+    imul edi, edx
+    add ebp, edi        ; ADD R10, R10, R6
+
+    popad
+    xor eax, eax
+    ret

@@ -1,0 +1,22 @@
+section .data
+vals dd 10, 20
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov edx, vals
+    mov esi, 1
+    mov ecx, 2
+
+    mov eax, [edx + 0]  ; LW R1, 0(R4)   load A
+    mov edi, [edx + 4]  ; LW R6, 4(R4)   load B
+    mov ebx, eax        ; ADD R2, R1, R5
+    add ebx, esi
+    mov ebp, edi        ; ADD R7, R6, R8
+    add ebp, ecx
+
+    popad
+    xor eax, eax
+    ret

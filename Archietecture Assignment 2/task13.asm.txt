@@ -1,0 +1,18 @@
+section .data
+arr dd 111, 222
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, arr
+
+    mov eax, [ebx + 0]  ; LW R3, 0(R2)
+    mov ecx, [ebx + 4]  ; LW R4, 4(R2)
+    mov [ebx + 4], eax  ; SW R3, 4(R2)
+    mov [ebx + 0], ecx  ; SW R4, 0(R2)
+
+    popad
+    xor eax, eax
+    ret

@@ -1,0 +1,18 @@
+section .data
+table dd arr            ; table[0] holds the address of arr
+arr   dd 11, 22
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, table      ; R2
+
+    mov eax, [ebx + 0]  ; LW R1, 0(R2)  -> pointer to arr
+    nop                 ; stall
+    mov ecx, [eax + 4]  ; LW R3, 4(R1)  -> arr[1] = 22
+
+    popad
+    xor eax, eax
+    ret
