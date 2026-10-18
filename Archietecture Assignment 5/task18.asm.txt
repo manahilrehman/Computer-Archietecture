@@ -1,0 +1,38 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+    push esi
+    push edi
+
+    ; Function-call approach
+    push dword 20
+    push dword 10
+    call add_values
+    add esp, 8
+    mov ebx, eax
+
+    ; Inline approach
+    mov eax, 10
+    add eax, 20
+
+    ; EBX = 30, EAX = 30 before cleanup
+
+    pop edi
+    pop esi
+    pop ebx
+    xor eax, eax
+    ret
+
+add_values:
+    push ebp
+    mov ebp, esp
+
+    mov eax, [ebp + 8]
+    add eax, [ebp + 12]
+
+    pop ebp
+    ret
+

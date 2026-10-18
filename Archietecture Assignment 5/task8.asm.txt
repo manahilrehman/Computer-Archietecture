@@ -1,0 +1,19 @@
+
+
+section .data
+    value dd 0
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, 50
+    mov [value], eax
+    mov ebx, [value]
+
+    ; EBX = 50
+    pop ebx
+    xor eax, eax
+    ret

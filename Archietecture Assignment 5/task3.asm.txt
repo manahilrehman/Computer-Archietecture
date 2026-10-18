@@ -1,0 +1,16 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, 12
+    mov ebx, 8
+    imul eax, ebx
+    add eax, 5
+
+    ; Result is 101 in EAX
+    pop ebx
+    xor eax, eax
+    ret

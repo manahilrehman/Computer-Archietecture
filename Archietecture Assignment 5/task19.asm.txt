@@ -1,0 +1,25 @@
+
+section .data
+    numbers dd 10, 20, 30, 40, 50, 60, 70, 80
+
+section .text
+    global _main
+
+_main:
+    push esi
+
+    mov esi, numbers
+    mov ecx, 8
+    xor eax, eax
+
+sum_loop:
+    add eax, [esi]
+    add esi, 4
+    dec ecx
+    jnz sum_loop
+
+    ; EAX = 360 before cleanup
+
+    pop esi
+    xor eax, eax
+    ret

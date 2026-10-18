@@ -1,0 +1,23 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, 0
+    mov ebx, 0
+
+    add eax, 1
+    add ebx, 2
+    add eax, 3
+    add ebx, 4
+    add eax, 5
+    add ebx, 6
+    add eax, 7
+    add ebx, 8
+
+    ; EAX = 16, EBX = 20
+    pop ebx
+    xor eax, eax
+    ret

@@ -1,0 +1,29 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+    push esi
+
+    mov eax, 5
+    mov ebx, 10
+
+    ; Independent instruction before branch
+    add ebx, 2
+
+    cmp eax, 5
+    je target
+
+    mov ecx, 0
+    jmp finish
+
+target:
+    mov ecx, 1
+
+finish:
+    ; EBX = 12, ECX = 1
+    pop esi
+    pop ebx
+    xor eax, eax
+    ret

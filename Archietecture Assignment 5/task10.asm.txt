@@ -1,0 +1,23 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, 10
+    cmp eax, 10
+    je equal_label
+
+    mov ebx, 0
+    jmp finish
+
+equal_label:
+    mov ebx, 1
+
+finish:
+    ; EBX = 1 because both values are equal
+    pop ebx
+    xor eax, eax
+    ret
+

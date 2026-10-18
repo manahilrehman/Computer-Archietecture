@@ -1,0 +1,21 @@
+
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov ecx, 5
+    mov ebx, 0
+
+repeat_loop:
+    add ebx, 2
+    dec ecx
+    jnz repeat_loop
+
+    ; EBX = 10 before restoring the original value
+    pop ebx
+    xor eax, eax
+    ret
+
