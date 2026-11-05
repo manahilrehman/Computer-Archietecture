@@ -1,0 +1,261 @@
+; ==============================================================================
+; Computer Architecture - Lab 7: Cache Memory Mapping Architectures
+; Problem 14: First-In, First-Out (FIFO) Replacement Queue
+;
+; Cache Spec: Fully associative, 4 lines
+; Task: Implement replacement using a circular pointer/index (modulo 4) stored
+;       in a register. On every miss, evict the slot at ptr and increment
+;       ptr = (ptr + 1) & 0x03.
+; Objective: Compare hit rates between FIFO and LRU algorithms for cyclic
+;            reference strings such as {A, B, C, D, E, A, B, C, D, E} and
+;            localized reuse strings.
+; ==============================================================================
+
+global _main
+extern _printf
+
+section .data
+    title_msg    db "==================================================", 10
+                 db " Lab 7 - Problem 14: FIFO vs LRU Replacement      ", 10
+                 db " Spec: 4 lines Fully Associative                  ", 10
+                 db " Sequence: {A, B, C, D, A, B, E, A, B, C, D, E}   ", 10
+                 db "==================================================", 10, 10, 0
+
+    trace_hdr    db "Step | Page Ref | FIFO Hit/Miss [Ptr] | LRU Hit/Miss [Oldest] | Behavioral Difference", 10
+                 db "-----+----------+---------------------+-----------------------+---------------------------------", 10, 0
+
+    row_fmt      db " %02d  |    %c     |    %-4s   [Ptr=%d]   |    %-4s   [Slot=%d]   | %s", 10, 0
+
+    summary_fmt  db "------------------------------------------------------------------------------------------------", 10
+                 db " Replacement Policy Comparison Summary:", 10
+                 db " Reference Stream Length : %d references", 10
+                 db " FIFO Hits               : %d / %d (%d%% Hit Rate)", 10
+                 db " LRU Hits                : %d / %d (%d%% Hit Rate)", 10
+                 db " Analysis: FIFO evicts purely by insertion age, ignoring recent reuse.", 10
+                 db "           LRU resets age on hits, protecting frequently reused blocks (A, B)!", 10
+                 db "------------------------------------------------------------------------------------------------", 10, 0
+
+    ref_seq      dd 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5
+    ref_char     db 'A', 'B', 'C', 'D', 'A', 'B', 'E', 'A', 'B', 'C', 'D', 'E'
+    SEQ_LEN      equ 12
+
+    str_hit      db "HIT ", 0
+    str_miss     db "MISS", 0
+
+    note_cold    db "Initial cold misses", 0
+    note_agree   db "Both policies agree", 0
+    note_lru_win db "LRU retains hot blocks, FIFO evicts!", 0
+
+    fifo_valid   times 4 dd 0
+    fifo_tag     times 4 dd -1
+    fifo_ptr     dd 0
+    fifo_hits    dd 0
+    fifo_misses  dd 0
+
+    lru_valid    times 4 dd 0
+    lru_tag      times 4 dd -1
+    lru_age      times 4 dd 0
+    lru_hits     dd 0
+    lru_misses   dd 0
+
+section .text
+_main:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+
+    push title_msg
+    call _printf
+    add esp, 4
+
+    push trace_hdr
+    call _printf
+    add esp, 4
+
+    xor esi, esi
+
+sim_loop:
+    mov eax, [ref_seq + esi*4]
+
+    xor edx, edx
+    mov edi, -1
+.fifo_search:
+    cmp dword [fifo_valid + edx*4], 1
+    jne .fifo_next
+    cmp [fifo_tag + edx*4], eax
+    jne .fifo_next
+    mov edi, edx
+    jmp .fifo_done_search
+.fifo_next:
+    inc edx
+    cmp edx, 4
+    jl .fifo_search
+
+.fifo_done_search:
+    cmp edi, -1
+    je .fifo_is_miss
+
+    inc dword [fifo_hits]
+    mov ebx, str_hit
+    jmp .step_lru
+
+.fifo_is_miss:
+    inc dword [fifo_misses]
+    mov edx, [fifo_ptr]
+    mov dword [fifo_valid + edx*4], 1
+    mov [fifo_tag + edx*4], eax
+
+    inc edx
+    and edx, 0x03
+    mov [fifo_ptr], edx
+
+    mov ebx, str_miss
+
+.step_lru:
+    xor edx, edx
+    mov edi, -1
+.lru_search:
+    cmp dword [lru_valid + edx*4], 1
+    jne .lru_next
+    cmp [lru_tag + edx*4], eax
+    jne .lru_next
+    mov edi, edx
+    jmp .lru_done_search
+.lru_next:
+    inc edx
+    cmp edx, 4
+    jl .lru_search
+
+.lru_done_search:
+    cmp edi, -1
+    je .lru_is_miss
+
+    inc dword [lru_hits]
+    xor edx, edx
+.up_lru_hit:
+    cmp edx, edi
+    je .rst_age
+    cmp dword [lru_valid + edx*4], 1
+    jne .nxt_up
+    inc dword [lru_age + edx*4]
+    jmp .nxt_up
+.rst_age:
+    mov dword [lru_age + edx*4], 0
+.nxt_up:
+    inc edx
+    cmp edx, 4
+    jl .up_lru_hit
+
+    mov ecx, str_hit
+    jmp .print_row
+
+.lru_is_miss:
+    inc dword [lru_misses]
+    xor edx, edx
+    mov edi, -1
+.find_empty_lru:
+    cmp dword [lru_valid + edx*4], 0
+    jne .nxt_emp
+    mov edi, edx
+    jmp .lru_replace
+.nxt_emp:
+    inc edx
+    cmp edx, 4
+    jl .find_empty_lru
+
+    xor edx, edx
+    mov edi, 0
+    mov ecx, [lru_age]
+.find_oldest:
+    inc edx
+    cmp edx, 4
+    jge .lru_replace
+    cmp [lru_age + edx*4], ecx
+    jle .find_oldest
+    mov ecx, [lru_age + edx*4]
+    mov edi, edx
+    jmp .find_oldest
+
+.lru_replace:
+    xor edx, edx
+.inc_lru_others:
+    cmp edx, edi
+    je .skip_v
+    cmp dword [lru_valid + edx*4], 1
+    jne .skip_v
+    inc dword [lru_age + edx*4]
+.skip_v:
+    inc edx
+    cmp edx, 4
+    jl .inc_lru_others
+
+    mov dword [lru_valid + edi*4], 1
+    mov [lru_tag + edi*4], eax
+    mov dword [lru_age + edi*4], 0
+
+    mov ecx, str_miss
+
+.print_row:
+    mov edx, note_agree
+    cmp esi, 4
+    jl .set_cold_note
+    cmp ebx, ecx
+    je .have_note
+    mov edx, note_lru_win
+    jmp .have_note
+.set_cold_note:
+    mov edx, note_cold
+.have_note:
+
+    push edx
+    push edi
+    push ecx
+    mov eax, [fifo_ptr]
+    push eax
+    push ebx
+    movzx eax, byte [ref_char + esi]
+    push eax
+    mov eax, esi
+    inc eax
+    push eax
+    push row_fmt
+    call _printf
+    add esp, 28
+
+    inc esi
+    cmp esi, SEQ_LEN
+    jl sim_loop
+
+    mov eax, [fifo_hits]
+    imul eax, 100
+    mov ecx, SEQ_LEN
+    xor edx, edx
+    div ecx
+    mov edi, eax
+
+    mov eax, [lru_hits]
+    imul eax, 100
+    xor edx, edx
+    div ecx
+    mov ebx, eax
+
+    push ebx
+    push dword SEQ_LEN
+    push dword [lru_hits]
+    push edi
+    push dword SEQ_LEN
+    push dword [fifo_hits]
+    push dword SEQ_LEN
+    push summary_fmt
+    call _printf
+    add esp, 32
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret

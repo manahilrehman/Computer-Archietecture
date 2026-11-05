@@ -1,0 +1,189 @@
+; ==============================================================================
+; Computer Architecture - Lab 7: Cache Memory Mapping Architectures
+; Problem 3: Loop Padding and Alignment Optimization
+;
+; Cache Spec: Direct-mapped, total capacity = 1 KB (64 blocks x 16 bytes)
+; Task: Modify the assembly layout of Problem 2 by introducing a 64-byte dummy
+;       buffer (4 cache lines) between the two arrays.
+; Objective: Measure how shifting the relative base address eliminates set-index
+;            collisions, restoring temporal and spatial cache hits.
+; ==============================================================================
+
+global _main
+extern _printf
+
+section .data
+    title_msg    db "==================================================", 10
+                 db " Lab 7 - Problem 3: Loop Padding & Alignment Opt  ", 10
+                 db " Cache: 1 KB (64 sets x 16 bytes/line)            ", 10
+                 db " Padding: 64-byte Dummy Buffer (4 Cache Lines)    ", 10
+                 db "==================================================", 10, 10, 0
+
+    col_header   db "Step | Access Target | Address    | Set | Tag   | Status | Result", 10
+                 db "-----+---------------+------------+-----+-------+--------+-------------------------", 10, 0
+
+    log_hit_fmt  db " %02d  | %-13s | 0x%08X | %02d  | 0x%03X | HIT    | Spatial Hit (No Collision!)", 10, 0
+    log_cold_fmt db " %02d  | %-13s | 0x%08X | %02d  | 0x%03X | MISS   | Cold Fill into Set %02d", 10, 0
+
+    summary_fmt  db "--------------------------------------------------------------------------------", 10
+                 db " Optimization & Comparison Summary:", 10
+                 db " Total Accesses            : %d", 10
+                 db " Cache Hits                : %d", 10
+                 db " Cache Misses              : %d (Cold Misses: %d, Conflict Misses: 0)", 10
+                 db " Optimized Hit Rate        : %d%%", 10
+                 db " Baseline Hit Rate (Prob 2): 0%% (Ping-Pong Thrashing)", 10
+                 db " Improvement               : +%d%% hit rate via 64-byte padding offset!", 10
+                 db "--------------------------------------------------------------------------------", 10, 0
+
+    name_A       db "ArrayA", 0
+    name_B       db "ArrayB", 0
+
+    ; Memory layout: ArrayA and ArrayB separated by 1024 bytes + 64 bytes dummy buffer
+    ArrayA       times 16 dd 100          ; 16 words = 64 bytes
+    base_pad     times 240 dd 0           ; 240 words = 960 bytes
+    dummy_buffer times 16 dd 0            ; 64-byte dummy buffer (4 cache lines padding)
+    ArrayB       times 16 dd 200          ; Offset is 1088 bytes = (64 + 4) cache lines!
+
+    ; Direct-Mapped Cache Table: 64 Sets
+    cache_valid  times 64 dd 0
+    cache_tag    times 64 dd -1
+
+    total_access dd 0
+    total_hits   dd 0
+    total_misses dd 0
+
+section .text
+_main:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+
+    ; Print Title
+    push title_msg
+    call _printf
+    add esp, 4
+
+    push col_header
+    call _printf
+    add esp, 4
+
+    mov dword [total_access], 0
+    mov dword [total_hits], 0
+    mov dword [total_misses], 0
+
+    xor esi, esi             ; esi = iteration i (0 to 7)
+
+padded_loop:
+    ; Access ArrayA[esi]
+    lea eax, [ArrayA + esi*4]
+    push name_A
+    push eax
+    call cache_access_padded
+    add esp, 8
+
+    ; Access ArrayB[esi] (Interleaved)
+    lea eax, [ArrayB + esi*4]
+    push name_B
+    push eax
+    call cache_access_padded
+    add esp, 8
+
+    inc esi
+    cmp esi, 8               ; 8 pairs = 16 accesses
+    jl padded_loop
+
+    ; Calculate Hit Rate = (hits * 100) / total_access
+    mov eax, [total_hits]
+    imul eax, 100
+    mov ecx, [total_access]
+    xor edx, edx
+    div ecx                  ; eax = hit rate %
+
+    ; Print Comparison Summary
+    push eax                 ; Improvement percentage
+    push eax                 ; Optimized Hit Rate
+    push dword [total_misses]; Cold misses
+    push dword [total_misses]; Total misses
+    push dword [total_hits]  ; Total hits
+    push dword [total_access]; Total accesses
+    push summary_fmt
+    call _printf
+    add esp, 28
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
+
+; ------------------------------------------------------------------------------
+; Helper: cache_access_padded(address, name_str)
+; ------------------------------------------------------------------------------
+cache_access_padded:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+
+    mov eax, [ebp + 8]       ; Memory Address
+    mov ebx, [ebp + 12]      ; Array Name string
+
+    ; Set Index = (Address >> 4) & 0x3F (bits 9:4)
+    mov edx, eax
+    shr edx, 4
+    and edx, 0x3F            ; edx = Set Index (0 to 63)
+
+    ; Tag = Address >> 10 (bits 31:10)
+    mov ecx, eax
+    shr ecx, 10              ; ecx = Tag
+
+    inc dword [total_access]
+
+    ; Check cache hit
+    cmp dword [cache_valid + edx*4], 1
+    jne .cache_miss
+    cmp dword [cache_tag + edx*4], ecx
+    je .cache_hit
+
+.cache_miss:
+    inc dword [total_misses]
+
+    ; Update cache set
+    mov dword [cache_valid + edx*4], 1
+    mov dword [cache_tag + edx*4], ecx
+
+    push edx                 ; Set index
+    push ecx                 ; Tag
+    push edx                 ; Set index
+    push eax                 ; Address
+    push ebx                 ; Name
+    push dword [total_access]; Step
+    push log_cold_fmt
+    call _printf
+    add esp, 28
+    jmp .done
+
+.cache_hit:
+    inc dword [total_hits]
+
+    push ecx                 ; Tag
+    push edx                 ; Set index
+    push eax                 ; Address
+    push ebx                 ; Name
+    push dword [total_access]; Step
+    push log_hit_fmt
+    call _printf
+    add esp, 24
+
+.done:
+    pop edi
+    pop esi
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret

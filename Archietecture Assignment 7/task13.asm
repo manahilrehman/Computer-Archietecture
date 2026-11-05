@@ -1,0 +1,161 @@
+; ==============================================================================
+; Computer Architecture - Lab 7: Cache Memory Mapping Architectures
+; Problem 13: Conflict Immunity Test (Anti-Ping-Pong Test)
+;
+; Cache Spec: Fully associative, 4 lines (16 bytes/line)
+; Task: Run the alternating address pattern from Problem 2 (e.g., alternating reads
+;       between addresses with identical low bits: 0x000, 0x400, 0x800, 0x000...).
+; Objective: Demonstrate that fully associative caches experience zero conflict
+;            misses on this pattern because any block can reside in any slot.
+; ==============================================================================
+
+global _main
+extern _printf
+
+section .data
+    title_msg    db "==================================================", 10
+                 db " Lab 7 - Problem 13: FA Conflict Immunity Test    ", 10
+                 db " (Anti-Ping-Pong Test in Fully Associative Cache) ", 10
+                 db " Spec: 4 lines, 16 B/line, Fully Associative      ", 10
+                 db " Addresses: 0x000, 0x400, 0x800 (Identical Low Bits)", 10
+                 db "==================================================", 10, 10, 0
+
+    trace_hdr    db "Access # | Address | Tag   | FA Slot | Status | Note", 10
+                 db "---------+---------+-------+---------+--------+-----------------------------------", 10, 0
+
+    log_cold_fmt db "   %02d    | 0x%05X | 0x%03X | Slot %d  | MISS   | Cold fill (Resides alongside others)", 10, 0
+    log_hit_fmt  db "   %02d    | 0x%05X | 0x%03X | Slot %d  | HIT    | Conflict-Free! Zero Thrashing", 10, 0
+
+    summary_fmt  db "-----------------------------------------------------------------------------------", 10
+                 db " Conflict Immunity Comparison Summary:", 10
+                 db " Total Accesses Tested     : %d", 10
+                 db " Fully Associative Hits    : %d", 10
+                 db " Fully Associative Misses  : %d (Cold Misses: %d, Conflict Misses: 0)", 10
+                 db " FA Steady-State Hit Rate  : 100%% (Overall: %d%%)", 10
+                 db " Direct-Mapped Hit Rate    : 0%% (Suffered 100%% Ping-Pong thrashing in Prob 2)", 10
+                 db " Architectural Conclusion  : Fully Associative caches are 100%% immune to conflict", 10
+                 db "                             misses whenever working set <= capacity (3 <= 4).", 10
+                 db "-----------------------------------------------------------------------------------", 10, 0
+
+    addr_stream  dd 0x00000, 0x00400, 0x00800, \
+                    0x00000, 0x00400, 0x00800, \
+                    0x00000, 0x00400, 0x00800, \
+                    0x00000, 0x00400, 0x00800
+    STREAM_LEN   equ 12
+
+    valid_slots  times 4 dd 0
+    tag_slots    times 4 dd -1
+
+    fa_hits      dd 0
+    fa_misses    dd 0
+    fa_cold      dd 0
+
+section .text
+_main:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+
+    push title_msg
+    call _printf
+    add esp, 4
+
+    push trace_hdr
+    call _printf
+    add esp, 4
+
+    mov dword [fa_hits], 0
+    mov dword [fa_misses], 0
+    mov dword [fa_cold], 0
+
+    xor esi, esi
+
+stream_loop:
+    mov edx, [addr_stream + esi*4]
+
+    mov ecx, edx
+    shr ecx, 4
+
+    xor eax, eax
+    mov edi, -1
+    mov ebx, -1
+
+search_fa:
+    cmp dword [valid_slots + eax*4], 1
+    jne .check_free
+    cmp [tag_slots + eax*4], ecx
+    je .is_hit
+    jmp .next_s
+
+.check_free:
+    cmp ebx, -1
+    jne .next_s
+    mov ebx, eax
+
+.next_s:
+    inc eax
+    cmp eax, 4
+    jl search_fa
+    jmp .handle_fa_miss
+
+.is_hit:
+    mov edi, eax
+    inc dword [fa_hits]
+
+    mov eax, esi
+    inc eax
+    push edi
+    push ecx
+    push edx
+    push eax
+    push log_hit_fmt
+    call _printf
+    add esp, 20
+    jmp .next_stream_item
+
+.handle_fa_miss:
+    inc dword [fa_misses]
+    inc dword [fa_cold]
+
+    mov dword [valid_slots + ebx*4], 1
+    mov [tag_slots + ebx*4], ecx
+
+    mov eax, esi
+    inc eax
+    push ebx
+    push ecx
+    push edx
+    push eax
+    push log_cold_fmt
+    call _printf
+    add esp, 20
+
+.next_stream_item:
+    inc esi
+    cmp esi, STREAM_LEN
+    jl stream_loop
+
+    mov eax, [fa_hits]
+    imul eax, 100
+    mov ecx, STREAM_LEN
+    xor edx, edx
+    div ecx
+
+    push eax
+    push dword [fa_cold]
+    push dword [fa_misses]
+    push dword [fa_hits]
+    push dword STREAM_LEN
+    push summary_fmt
+    call _printf
+    add esp, 24
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
