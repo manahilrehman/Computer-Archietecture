@@ -1,0 +1,28 @@
+
+section .data
+    array dd 10, 20, 30, 40, 50, 60, 70, 80
+
+section .text
+    global _main
+    extern _ExitProcess@4
+
+_main:
+    mov ecx, 1000
+
+outer_loop:
+    mov esi, array
+    mov ebx, 7
+
+inner_loop:
+    mov eax, [esi]
+    mov [esi + 4], eax
+
+    add esi, 4
+    dec ebx
+    jnz inner_loop
+
+    dec ecx
+    jnz outer_loop
+
+    push dword 0
+    call _ExitProcess@4

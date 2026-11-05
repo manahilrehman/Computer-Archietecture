@@ -1,0 +1,46 @@
+
+
+section .data
+    a dd 1, 2, 3, 4
+    b dd 10, 20, 30, 40
+
+section .text
+    global _main
+
+_main:
+    push ebx
+    push esi
+    push edi
+
+    mov esi, a
+    mov edi, b
+    xor eax, eax
+    xor edx, edx
+
+    ; First accumulator: elements 1 and 3
+    mov ebx, [esi]
+    imul ebx, [edi]
+    add eax, ebx
+
+    mov ebx, [esi + 8]
+    imul ebx, [edi + 8]
+    add eax, ebx
+
+    ; Second accumulator: elements 2 and 4
+    mov ebx, [esi + 4]
+    imul ebx, [edi + 4]
+    add edx, ebx
+
+    mov ebx, [esi + 12]
+    imul ebx, [edi + 12]
+    add edx, ebx
+
+    add eax, edx
+
+    ; EAX = 300 before cleanup
+
+    pop edi
+    pop esi
+    pop ebx
+    xor eax, eax
+    ret

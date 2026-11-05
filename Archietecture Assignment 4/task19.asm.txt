@@ -1,0 +1,27 @@
+section .data
+mem     dd 100
+var_R7  dd 50
+var_R8  dd 20
+var_R10 dd 0xFF
+var_R11 dd 0x0F
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, mem
+    mov edx, 3
+    mov esi, 4
+
+    mov eax, [ebx + 0]  ; LW  R1, 0(R2)   (MEM stage uses memory port)
+    mov ecx, edx        ; ADD R3, R4, R5
+    add ecx, esi
+    mov edi, [var_R7]   ; SUB R6, R7, R8
+    sub edi, [var_R8]
+    mov ebp, [var_R10]  ; AND R9, R10, R11  (IF conflicts with LW MEM)
+    and ebp, [var_R11]
+
+    popad
+    xor eax, eax
+    ret

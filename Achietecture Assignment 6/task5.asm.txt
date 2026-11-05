@@ -1,0 +1,86 @@
+
+global _main
+extern _printf
+
+%define N 256
+%define T 16
+
+section .data
+    fmt db "Transpose complete. B[1][0] = %u", 10, 0
+
+section .bss
+    A resd 65536
+    B resd 65536
+    i resd 1
+    j resd 1
+    ii resd 1
+    jj resd 1
+
+section .text
+_main:
+    push ebx
+    push esi
+    push edi
+
+    xor esi, esi
+
+init:
+    mov [A + esi*4], esi
+    inc esi
+    cmp esi, 65536
+    jl init
+
+    mov dword [i], 0
+
+block_i:
+    mov dword [j], 0
+
+block_j:
+    mov eax, [i]
+    mov [ii], eax
+
+tile_i:
+    mov eax, [j]
+    mov [jj], eax
+
+tile_j:
+    mov eax, [ii]
+    shl eax, 8
+    add eax, [jj]
+    mov ebx, [A + eax*4]
+
+    mov eax, [jj]
+    shl eax, 8
+    add eax, [ii]
+    mov [B + eax*4], ebx
+
+    inc dword [jj]
+    mov eax, [j]
+    add eax, T
+    cmp [jj], eax
+    jl tile_j
+
+    inc dword [ii]
+    mov eax, [i]
+    add eax, T
+    cmp [ii], eax
+    jl tile_i
+
+    add dword [j], T
+    cmp dword [j], N
+    jl block_j
+
+    add dword [i], T
+    cmp dword [i], N
+    jl block_i
+
+    push dword [B + 4]
+    push fmt
+    call _printf
+    add esp, 8
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    ret

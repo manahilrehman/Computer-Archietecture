@@ -1,0 +1,36 @@
+
+section .data
+    values dd 10, 20, 30, 40, 50
+    output dd 0, 0, 0, 0, 0
+
+section .text
+    global _main
+
+_main:
+    push ebx
+    push esi
+    push edi
+
+    mov esi, values
+    mov edi, output
+    mov ecx, 5
+
+process_loop:
+    mov eax, [esi]
+    imul eax, 2
+    add eax, 10
+    mov [edi], eax
+
+    add esi, 4
+    add edi, 4
+    dec ecx
+    jnz process_loop
+
+    ; output contains 30, 50, 70, 90, 110
+
+    pop edi
+    pop esi
+    pop ebx
+    xor eax, eax
+    ret
+

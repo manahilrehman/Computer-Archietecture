@@ -1,0 +1,21 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov eax, 1
+    mov ebx, 2
+    mov ecx, 3
+    mov edx, 4
+
+    add eax, ebx        ; R1 = R1 + R2
+    nop
+    nop
+    add eax, ecx        ; R1 = R1 + R3
+    nop
+    nop
+    add eax, edx        ; R1 = R1 + R4
+
+    popad
+    xor eax, eax
+    ret

@@ -1,0 +1,30 @@
+
+
+global _main
+extern _printf
+
+section .data
+    value dd 10
+    fmt db "Final value = %u", 10, 0
+
+section .text
+_main:
+    push ebx
+
+    mov ebx, 10000
+
+loop_start:
+    mov eax, [value]
+    inc eax
+    mov [value], eax
+    dec ebx
+    jnz loop_start
+
+    push dword [value]
+    push fmt
+    call _printf
+    add esp, 8
+
+    xor eax, eax
+    pop ebx
+    ret

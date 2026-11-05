@@ -1,0 +1,81 @@
+
+global _main
+extern _printf
+
+%define COUNT 10000
+
+section .data
+    fmt1 db "AoS sum = %u", 10, 0
+    fmt2 db "SoA sum = %u", 10, 0
+
+section .bss
+    aos resb COUNT*16
+    xs resd COUNT
+    ys resd COUNT
+    tags resb COUNT
+    zs resd COUNT
+
+section .text
+_main:
+    push ebx
+    push esi
+    push edi
+
+    xor esi, esi
+
+init:
+    mov eax, esi
+
+    mov edx, esi
+    shl edx, 4
+    mov [aos + edx], eax
+
+    mov [xs + esi*4], eax
+    mov [ys + esi*4], eax
+    mov byte [tags + esi], 1
+    mov [zs + esi*4], eax
+
+    inc esi
+    cmp esi, COUNT
+    jl init
+
+    xor ebx, ebx
+    xor esi, esi
+
+aos_loop:
+    mov edx, esi
+    shl edx, 4
+    mov eax, [aos + edx]
+
+    add ebx, eax
+    inc esi
+    cmp esi, COUNT
+    jl aos_loop
+
+    push ebx
+    push fmt1
+    call _printf
+    add esp, 8
+
+    xor ebx, ebx
+    xor esi, esi
+
+soa_loop:
+    mov eax, [xs + esi*4]
+    add ebx, eax
+
+    inc esi
+    cmp esi, COUNT
+    jl soa_loop
+
+    push ebx
+    push fmt2
+    call _printf
+    add esp, 8
+
+    xor eax, eax
+
+    pop edi
+    pop esi
+    pop ebx
+    ret

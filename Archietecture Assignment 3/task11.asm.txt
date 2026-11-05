@@ -1,0 +1,20 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov eax, 1
+    mov ebx, 2
+    mov ecx, 3
+    mov edx, 4
+
+    mov esi, eax        ; ADD R5, R1, R2   (A + B)
+    add esi, ebx
+    mov edi, ecx        ; ADD R6, R3, R4   (C + D)
+    add edi, edx
+    mov ebp, esi        ; ADD R7, R5, R6   (result)
+    add ebp, edi
+
+    popad
+    xor eax, eax
+    ret

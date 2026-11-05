@@ -1,0 +1,18 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov eax, 5
+
+LOOP:
+    cmp eax, 0          ; exit test (added for safety)
+    je  DONE
+    sub eax, 1          ; SUB R1, R1, 1  (delay-slot instruction)
+    jmp LOOP            ; J LOOP
+DONE:
+    nop
+
+    popad
+    xor eax, eax
+    ret

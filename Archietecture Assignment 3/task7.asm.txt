@@ -1,0 +1,22 @@
+section .data
+mem dd 100
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, mem
+    mov edx, 5
+    mov edi, 50
+    mov ebp, 20
+
+    mov eax, [ebx + 0]  ; LW  R1, 0(R2)
+    mov esi, edi        ; SUB R5, R6, R7  (independent work)
+    sub esi, ebp
+    mov ecx, eax        ; ADD R3, R1, R4
+    add ecx, edx
+
+    popad
+    xor eax, eax
+    ret

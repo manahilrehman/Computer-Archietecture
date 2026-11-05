@@ -1,0 +1,15 @@
+
+section .text
+    global _main
+
+_main:
+    mov eax, -25
+    cmp eax, 0
+    jge positive
+
+    neg eax
+
+positive:
+    ; EAX = 25
+    xor eax, eax
+    ret

@@ -1,0 +1,18 @@
+
+section .data
+    message dd 100
+
+section .text
+    global _main
+
+_main:
+    mov eax, [message]
+    add eax, 50
+    mov [message], eax
+
+    ; message now contains 150
+    ; This modifies data, not executable instructions.
+
+    xor eax, eax
+    ret
+

@@ -1,0 +1,16 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, 10
+    nop
+    nop
+    add eax, 5
+
+    ; Result = 15 in EAX
+    pop ebx
+    xor eax, eax
+    ret

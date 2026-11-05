@@ -1,0 +1,47 @@
+
+global _main
+extern _printf
+
+section .data
+    fmt db "Stride = %u bytes, sum = %u", 10, 0
+    strides dd 4, 16, 32, 64, 128
+
+section .bss
+    array resd 32768
+
+section .text
+_main:
+    push ebx
+    push esi
+    push edi
+
+    mov edi, strides
+    mov ebx, 5
+
+next_stride:
+    mov esi, [edi]
+    xor edx, edx
+    xor ecx, ecx
+
+load_loop:
+    mov eax, [array + edx]
+    add ecx, eax
+    add edx, esi
+    cmp edx, 131072
+    jb load_loop
+
+    push ecx
+    push esi
+    push fmt
+    call _printf
+    add esp, 12
+
+    add edi, 4
+    dec ebx
+    jnz next_stride
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    ret

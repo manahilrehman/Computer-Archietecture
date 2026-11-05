@@ -1,0 +1,19 @@
+section .data
+mem dd 100
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, mem        ; R2 = base address
+    mov edx, 5
+
+    mov eax, [ebx + 0]  ; LW R1, 0(R2)
+    nop                 ; stall
+    mov ecx, eax        ; ADD R3, R1, R4
+    add ecx, edx
+
+    popad
+    xor eax, eax
+    ret

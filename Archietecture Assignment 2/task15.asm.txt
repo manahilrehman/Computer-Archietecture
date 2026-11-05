@@ -1,0 +1,17 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov eax, 5
+    mov ebx, 5
+
+    cmp eax, ebx        ; BEQ R1, R2, TARGET
+    je  TARGET
+    nop                 ; delay slot / flushed instruction
+TARGET:
+    nop
+
+    popad
+    xor eax, eax
+    ret

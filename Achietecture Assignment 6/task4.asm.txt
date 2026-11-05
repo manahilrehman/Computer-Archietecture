@@ -1,0 +1,78 @@
+
+global _main
+extern _printf
+
+section .data
+    fmt1 db "Row-major sum = %u", 10, 0
+    fmt2 db "Column-major sum = %u", 10, 0
+
+section .bss
+    matrix resd 65536
+
+section .text
+_main:
+    push ebx
+    push esi
+    push edi
+
+    xor esi, esi
+
+init_loop:
+    mov [matrix + esi*4], esi
+    inc esi
+    cmp esi, 65536
+    jl init_loop
+
+    xor ebx, ebx
+    xor esi, esi
+
+row_outer:
+    xor edi, edi
+
+row_inner:
+    mov eax, esi
+    shl eax, 8
+    add eax, edi
+    add ebx, [matrix + eax*4]
+    inc edi
+    cmp edi, 256
+    jl row_inner
+
+    inc esi
+    cmp esi, 256
+    jl row_outer
+
+    push ebx
+    push fmt1
+    call _printf
+    add esp, 8
+
+    xor ebx, ebx
+    xor esi, esi
+
+col_outer:
+    xor edi, edi
+
+col_inner:
+    mov eax, edi
+    shl eax, 8
+    add eax, esi
+    add ebx, [matrix + eax*4]
+    inc edi
+    cmp edi, 256
+    jl col_inner
+
+    inc esi
+    cmp esi, 256
+    jl col_outer
+
+    push ebx
+    push fmt2
+    call _printf
+    add esp, 8
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    ret

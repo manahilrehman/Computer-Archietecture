@@ -1,0 +1,15 @@
+
+section .text
+    global _main
+
+_main:
+    mov ecx, 3
+
+loop_start:
+    dec ecx
+    cmp ecx, 0
+    jne loop_start
+
+    ; Loop finishes when ECX = 0
+    xor eax, eax
+    ret

@@ -1,0 +1,16 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, 10
+    mov ecx, 20
+    mov esi, buf        ; R5 = address
+
+    mov edx, ebx        ; ADD R4, R2, R3
+    add edx, ecx
+    mov [esi + 0], edx  ; SW R4, 0(R5)
+
+    popad
+    xor eax, eax
+    ret

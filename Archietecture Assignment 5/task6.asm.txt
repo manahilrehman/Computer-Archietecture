@@ -1,0 +1,19 @@
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, 10
+    mov ebx, 20
+    mov ecx, 30
+
+    ; Independent operation scheduled before use
+    add ecx, 5
+    add eax, ebx
+
+    ; EAX = 30, ECX = 35
+    pop ebx
+    xor eax, eax
+    ret

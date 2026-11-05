@@ -1,0 +1,46 @@
+
+
+global _main
+extern _printf
+
+section .data
+    fmt db "Array sum = %u", 10, 0
+
+section .bss
+    array resd 1024
+
+section .text
+_main:
+    push ebx
+    push esi
+    push edi
+
+    xor esi, esi
+    xor edi, edi
+
+fill_array:
+    mov [array + esi*4], esi
+    inc esi
+    cmp esi, 1024
+    jl fill_array
+
+    xor esi, esi
+    xor ebx, ebx
+
+sum_array:
+    mov eax, [array + esi*4]
+    add ebx, eax
+    inc esi
+    cmp esi, 1024
+    jl sum_array
+
+    push ebx
+    push fmt
+    call _printf
+    add esp, 8
+
+    xor eax, eax
+    pop edi
+    pop esi
+    pop ebx
+    ret

@@ -1,0 +1,22 @@
+section .data
+mem dd 0
+
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, mem
+
+    mov eax, [ebx + 0]  ; LW R1, 0(R2)
+    nop                 ; stall 1
+    nop                 ; stall 2
+    cmp eax, 0          ; BEQ R1, R0, TARGET
+    je  TARGET
+    nop                 ; delay slot
+TARGET:
+    nop
+
+    popad
+    xor eax, eax
+    ret

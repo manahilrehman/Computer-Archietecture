@@ -1,0 +1,45 @@
+
+section .data
+    a dd 1, 2, 3, 4
+    b dd 10, 20, 30, 40
+
+section .text
+    global _main
+
+_main:
+    push ebx
+    push esi
+    push edi
+
+    mov esi, a
+    mov edi, b
+    xor eax, eax
+
+    ; First element: 1 * 10
+    mov ebx, [esi]
+    imul ebx, [edi]
+    add eax, ebx
+
+    ; Second element: 2 * 20
+    mov ebx, [esi + 4]
+    imul ebx, [edi + 4]
+    add eax, ebx
+
+    ; Third element: 3 * 30
+    mov ebx, [esi + 8]
+    imul ebx, [edi + 8]
+    add eax, ebx
+
+    ; Fourth element: 4 * 40
+    mov ebx, [esi + 12]
+    imul ebx, [edi + 12]
+    add eax, ebx
+
+    ; EAX = 300 before cleanup
+
+    pop edi
+    pop esi
+    pop ebx
+    xor eax, eax
+    ret
+

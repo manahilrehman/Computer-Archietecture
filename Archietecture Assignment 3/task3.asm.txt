@@ -1,0 +1,24 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, 10
+    mov ecx, 20
+    mov esi, 0xFF
+    mov edi, 0x3C
+
+    ; ADD R2, R4, R5
+    mov eax, ebx
+    add eax, ecx
+    ; AND R6, R7, R8   (independent instruction)
+    mov edx, esi
+    and edx, edi
+    nop
+    ; OR R9, R2, R10
+    mov ebp, eax
+    or  ebp, [var_R10]
+
+    popad
+    xor eax, eax
+    ret

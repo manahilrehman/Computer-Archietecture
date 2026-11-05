@@ -1,0 +1,20 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov ebx, 10
+    mov ecx, 20
+    mov edx, 7
+    mov esi, 7
+
+    cmp edx, esi        ; BEQ R4, R5, TARGET  (compare)
+    lea eax, [ebx+ecx]  ; ADD R1, R2, R3     (delay slot, always executes)
+    je  TARGET          ;                     (branch)
+    nop
+TARGET:
+    nop
+
+    popad
+    xor eax, eax
+    ret

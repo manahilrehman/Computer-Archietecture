@@ -1,0 +1,16 @@
+section .text
+global _main
+_main:
+    pushad
+
+    mov edx, 1
+
+    sub edx, 1          ; SUB R4, R4, 1
+    je  EXIT            ; BEQ R4, R0, EXIT
+    nop                 ; delay slot fallback
+EXIT:
+    nop
+
+    popad
+    xor eax, eax
+    ret

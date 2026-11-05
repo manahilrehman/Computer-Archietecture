@@ -1,0 +1,13 @@
+
+section .text
+    global _main
+
+_main:
+    mov eax, 100
+    xor edx, edx
+    mov ecx, 7
+    div ecx
+
+    ; EAX = quotient, EDX = remainder
+    xor eax, eax
+    ret

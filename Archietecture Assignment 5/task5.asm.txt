@@ -1,0 +1,18 @@
+
+section .data
+    value dd 25
+
+section .text
+    global _main
+
+_main:
+    push ebx
+
+    mov eax, [value]
+    add eax, 10
+
+    ; Result = 35 in EAX
+    pop ebx
+    xor eax, eax
+    ret
+
